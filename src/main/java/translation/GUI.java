@@ -1,8 +1,10 @@
 package translation;
 
 import javax.swing.*;
-import java.awt.event.*;
 
+import java.awt.GridLayout;
+import java.awt.event.*;
+import java.util.List;
 
 // TODO Task D: Update the GUI for the program to align with UI shown in the README example.
 //            Currently, the program only uses the CanadaTranslator and the user has
@@ -13,6 +15,23 @@ public class GUI {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
+            CountryCodeConverter countryCodeConverter = new CountryCodeConverter();
+            LanguageCodeConverter languageCodeConverter = new LanguageCodeConverter();
+            JSONTranslator json = new JSONTranslator();
+            JComboBox countryBox = new JComboBox<>();
+            List<String> countryCodes = json.getCountryCodes();
+            for (int i = 0; i < countryCodes.size(); i++) {
+                countryBox.addItem(countryCodeConverter.fromCountryCode(countryCodes.get(i)));
+            }
+            List<String> langCodes = json.getLanguageCodes();
+            String[] langs = new String[langCodes.size()];
+            for (int i = 0; i < langCodes.size(); i++) {
+                langs[i] = languageCodeConverter.fromLanguageCode(langCodes.get(i));
+            }
+            System.out.println(langs.length);
+            JList langList = new JList<>(langs);
+
+            langList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
             JPanel countryPanel = new JPanel();
             JTextField countryField = new JTextField(10);
             countryField.setText("can");
@@ -21,9 +40,10 @@ public class GUI {
             countryPanel.add(countryField);
 
             JPanel languagePanel = new JPanel();
-            JTextField languageField = new JTextField(10);
             languagePanel.add(new JLabel("Language:"));
-            languagePanel.add(languageField);
+            JScrollPane scrollPane = new JScrollPane(langList);
+            languagePanel.add(scrollPane);
+            JPanel mainPanel = new JPanel();
 
             JPanel buttonPanel = new JPanel();
             JButton submit = new JButton("Submit");
@@ -34,12 +54,11 @@ public class GUI {
             JLabel resultLabel = new JLabel("\t\t\t\t\t\t\t");
             buttonPanel.add(resultLabel);
 
-
             // adding listener for when the user clicks the submit button
             submit.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    String language = languageField.getText();
+                    String language = "hi";
                     String country = countryField.getText();
 
                     // for now, just using our simple translator, but
@@ -56,18 +75,16 @@ public class GUI {
 
             });
 
-            JPanel mainPanel = new JPanel();
             mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-            mainPanel.add(countryPanel);
-            mainPanel.add(languagePanel);
             mainPanel.add(buttonPanel);
+            mainPanel.add(languagePanel);
+            mainPanel.add(countryBox);
 
             JFrame frame = new JFrame("Country Name Translator");
             frame.setContentPane(mainPanel);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.pack();
             frame.setVisible(true);
-
 
         });
     }
