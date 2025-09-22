@@ -1,9 +1,12 @@
 package translation;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 import java.awt.GridLayout;
 import java.awt.event.*;
+import java.util.Arrays;
 import java.util.List;
 
 // TODO Task D: Update the GUI for the program to align with UI shown in the README example.
@@ -18,67 +21,101 @@ public class GUI {
             CountryCodeConverter countryCodeConverter = new CountryCodeConverter();
             LanguageCodeConverter languageCodeConverter = new LanguageCodeConverter();
             JSONTranslator json = new JSONTranslator();
-            JComboBox countryBox = new JComboBox<>();
+            JComboBox langBox = new JComboBox<>();
             List<String> countryCodes = json.getCountryCodes();
-            for (int i = 0; i < countryCodes.size(); i++) {
-                countryBox.addItem(countryCodeConverter.fromCountryCode(countryCodes.get(i)));
-            }
             List<String> langCodes = json.getLanguageCodes();
-            String[] langs = new String[langCodes.size()];
             for (int i = 0; i < langCodes.size(); i++) {
-                langs[i] = languageCodeConverter.fromLanguageCode(langCodes.get(i));
+                langBox.addItem(languageCodeConverter.fromLanguageCode(langCodes.get(i)));
             }
-            System.out.println(langs.length);
-            JList langList = new JList<>(langs);
+            String[] countries = new String[countryCodes.size()];
+            for (int i = 0; i < countryCodes.size(); i++) {
+                countries[i] = countryCodeConverter.fromCountryCode(countryCodes.get(i));
+            }
+            System.out.println(countries.length);
+            JList countryList = new JList<>(countries);
 
-            langList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            countryList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            JPanel langPanel = new JPanel();
+            langPanel.add(langBox);
+
             JPanel countryPanel = new JPanel();
-            JTextField countryField = new JTextField(10);
-            countryField.setText("can");
-            countryField.setEditable(false); // we only support the "can" country code for now
-            countryPanel.add(new JLabel("Country:"));
-            countryPanel.add(countryField);
-
-            JPanel languagePanel = new JPanel();
-            languagePanel.add(new JLabel("Language:"));
-            JScrollPane scrollPane = new JScrollPane(langList);
-            languagePanel.add(scrollPane);
+            countryPanel.add(new JLabel("Language:"));
+            JScrollPane scrollPane = new JScrollPane(countryList);
+            countryPanel.add(scrollPane);
             JPanel mainPanel = new JPanel();
 
             JPanel buttonPanel = new JPanel();
-            JButton submit = new JButton("Submit");
-            buttonPanel.add(submit);
 
             JLabel resultLabelText = new JLabel("Translation:");
             buttonPanel.add(resultLabelText);
             JLabel resultLabel = new JLabel("\t\t\t\t\t\t\t");
             buttonPanel.add(resultLabel);
+            countryList.addListSelectionListener(new ListSelectionListener() {
 
-            // adding listener for when the user clicks the submit button
-            submit.addActionListener(new ActionListener() {
+                /**
+                 * Called whenever the value of the selection changes.
+                 *
+                 * @param e the event that characterizes the change.
+                 */
                 @Override
-                public void actionPerformed(ActionEvent e) {
-                    String language = "hi";
-                    String country = countryField.getText();
+                public void valueChanged(ListSelectionEvent e) {
+
+                    if (countryList.getSelectedIndices().length == 0) {
+                        resultLabel.setText("No language selected!");
+                        return;
+                    }
+                    String country = countryList.getModel().getElementAt(countryList.getSelectedIndices()[0])
+                            .toString();
+                    String language = langBox.getSelectedItem().toString();
 
                     // for now, just using our simple translator, but
                     // we'll need to use the real JSON version later.
-                    Translator translator = new CanadaTranslator();
 
-                    String result = translator.translate(country, language);
+                    String result = json.translate(countryCodeConverter.fromCountry(country),
+                            languageCodeConverter.fromLanguage(language));
                     if (result == null) {
                         result = "no translation found!";
                     }
                     resultLabel.setText(result);
 
                 }
+            });
+            langBox.addItemListener(new ItemListener() {
+
+                /**
+                 * Invoked when an item has been selected or deselected by the user.
+                 * The code written for this method performs the operations
+                 * that need to occur when an item is selected (or deselected).
+                 *
+                 * @param e the event to be processed
+                 */
+                @Override
+                public void itemStateChanged(ItemEvent e) {
+                    if (countryList.getSelectedIndices().length == 0) {
+                        resultLabel.setText("No language selected!");
+                        return;
+                    }
+                    String country = countryList.getModel().getElementAt(countryList.getSelectedIndices()[0])
+                            .toString();
+                    String language = langBox.getSelectedItem().toString();
+
+                    // for now, just using our simple translator, but
+                    // we'll need to use the real JSON version later.
+
+                    String result = json.translate(countryCodeConverter.fromCountry(country),
+                            languageCodeConverter.fromLanguage(language));
+                    if (result == null) {
+                        result = "no translation found!";
+                    }
+                    resultLabel.setText(result);
+                }
 
             });
 
             mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+            mainPanel.add(langPanel);
             mainPanel.add(buttonPanel);
-            mainPanel.add(languagePanel);
-            mainPanel.add(countryBox);
+            mainPanel.add(countryPanel);
 
             JFrame frame = new JFrame("Country Name Translator");
             frame.setContentPane(mainPanel);
